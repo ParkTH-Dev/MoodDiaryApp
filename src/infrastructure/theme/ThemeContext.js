@@ -27,12 +27,6 @@ export const ThemeProvider = ({ children }) => {
       const newThemeValue = !isDarkMode;
       await AsyncStorage.setItem("themeMode", newThemeValue ? "dark" : "light");
       setIsDarkMode(newThemeValue);
-      if (Platform.OS === "android") {
-        const RNRestart = require("react-native-restart").default;
-        setTimeout(() => {
-          RNRestart.Restart();
-        }, 100);
-      }
     } catch (error) {
       console.error("테마 설정 저장 실패:", error);
     }

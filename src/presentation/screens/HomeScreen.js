@@ -14,11 +14,25 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors } from "../../infrastructure/theme/colors";
 import EditEntryModal from "../components/EditEntryModal";
 import { useTheme } from "../../infrastructure/theme/ThemeContext";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import Modal from "react-native-modal";
+
+const EMOTIONS = [
+  { emoji: "😊", primary: "기쁨", intensity: 8 },
+  { emoji: "😔", primary: "슬픔", intensity: 4 },
+  { emoji: "😡", primary: "분노", intensity: 7 },
+  { emoji: "😰", primary: "불안", intensity: 6 },
+  { emoji: "😌", primary: "평온", intensity: 5 },
+  { emoji: "🥰", primary: "설렘", intensity: 8 },
+  { emoji: "😫", primary: "지침", intensity: 3 },
+  { emoji: "😕", primary: "허탈", intensity: 4 },
+];
 
 export default function HomeScreen({ navigation }) {
   const { isDarkMode } = useTheme();
   const [feeling, setFeeling] = useState("");
-  const [selectedEmotion, setSelectedEmotion] = useState("");
+  const [selectedEmotion, setSelectedEmotion] = useState(null);
+  const [isEmotionModalVisible, setIsEmotionModalVisible] = useState(false);
   const [entries, setEntries] = useState([]);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -31,7 +45,7 @@ export default function HomeScreen({ navigation }) {
         setEntries(JSON.parse(savedEntries));
       }
     } catch (error) {
-      console.error("데이터 로딩 실패:", error);
+      console.error("데이터 로드 실패:", error);
     }
   };
 
@@ -119,55 +133,70 @@ export default function HomeScreen({ navigation }) {
   };
 
   const showEditDeleteOptions = (entry) => {
-    Alert.alert("기록 관리", "어떤 작업을 하시겠습니까?", [
-      {
-        text: "수정",
-        onPress: () => {
-          setSelectedEntry(entry);
-          setIsEditModalVisible(true);
-        },
-      },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () => {
-          Alert.alert("삭제 확인", "정말 삭제하시겠습니까?", [
-            {
-              text: "취소",
-              style: "cancel",
-            },
-            {
-              text: "삭제",
-              style: "destructive",
-              onPress: () => deleteEntry(entry.id),
-            },
-          ]);
-        },
-      },
-      {
-        text: "취소",
-        style: "cancel",
-      },
-    ]);
+    setSelectedEntry(entry);
+    setIsEditModalVisible(true);
   };
 
-  const EmotionButton = ({ icon, isSelected, onPress }) => (
+  const EmotionItem = ({ emotion, onSelect }) => (
     <TouchableOpacity
-      style={[styles.emotionButton, isSelected && styles.selectedEmotionButton]}
-      onPress={() => setSelectedEmotion(icon)}
+      style={[
+        styles.emotionItem,
+        selectedEmotion?.primary === emotion.primary &&
+          styles.selectedEmotionItem,
+      ]}
+      onPress={() => onSelect(emotion)}
     >
+      <Text style={styles.emotionEmoji}>{emotion.emoji}</Text>
       <Text
-        style={[styles.emotionIcon, isSelected && styles.selectedEmotionIcon]}
+        style={[
+          styles.emotionText,
+          { color: isDarkMode ? colors.dark.text : colors.light.text },
+        ]}
       >
-        {icon}
+        {emotion.primary}
       </Text>
-      {isSelected && (
-        <View style={styles.selectedIndicator}>
-          <Text style={styles.selectedText}>선택됨</Text>
-        </View>
-      )}
     </TouchableOpacity>
   );
+
+  const handleEmotionSelect = (emotion) => {
+    setSelectedEmotion(emotion);
+    setIsEmotionModalVisible(false);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const updatedEntries = entries.filter((entry) => entry.id !== id);
+      await AsyncStorage.setItem(
+        "diaryEntries",
+        JSON.stringify(updatedEntries)
+      );
+      setEntries(updatedEntries);
+      setIsEditModalVisible(false);
+    } catch (error) {
+      console.error("일기 삭제 실패:", error);
+      Alert.alert("오류", "일기 삭제 중 문제가 발생했습니다.");
+    }
+  };
+
+  const handleUpdate = async (feeling, emotion) => {
+    try {
+      if (!selectedEntry) return;
+
+      const updatedEntries = entries.map((entry) =>
+        entry.id === selectedEntry.id ? { ...entry, feeling, emotion } : entry
+      );
+
+      await AsyncStorage.setItem(
+        "diaryEntries",
+        JSON.stringify(updatedEntries)
+      );
+      setEntries(updatedEntries);
+      setIsEditModalVisible(false);
+    } catch (error) {
+      console.error("일기 수정 실패:", error);
+      Alert.alert("오류", "일기 수정 중 문제가 발생했습니다.");
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -191,18 +220,26 @@ export default function HomeScreen({ navigation }) {
             감정 기록
           </Text>
         </View>
+        <View style={styles.inputSection}>
+          <TouchableOpacity
+            style={[
+              styles.emotionSelector,
+              selectedEmotion && styles.selectedEmotionSelector,
+            ]}
+            onPress={() => setIsEmotionModalVisible(true)}
+          >
+            <Text style={styles.emotionSelectorText}>
+              {selectedEmotion
+                ? `${selectedEmotion.emoji} ${selectedEmotion.primary}`
+                : "감정 선택하기"}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={24}
+              color={isDarkMode ? colors.dark.text : colors.light.text}
+            />
+          </TouchableOpacity>
 
-        <View
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor: isDarkMode
-                ? colors.dark.background
-                : colors.light.background,
-              marginBottom: 20,
-            },
-          ]}
-        >
           <TextInput
             style={[
               styles.input,
@@ -211,8 +248,6 @@ export default function HomeScreen({ navigation }) {
                   ? colors.dark.surface
                   : colors.light.surface,
                 color: isDarkMode ? colors.dark.text : colors.light.text,
-                padding: 15,
-                borderRadius: 8,
               },
             ]}
             placeholder="오늘의 감정을 기록해보세요... (최대 500자)"
@@ -220,22 +255,49 @@ export default function HomeScreen({ navigation }) {
               isDarkMode ? colors.dark.placeholder : colors.light.placeholder
             }
             value={feeling}
-            onChangeText={(text) => {
-              if (text.length <= 500) {
-                setFeeling(text);
-              }
-            }}
-            maxLength={500}
+            onChangeText={setFeeling}
             multiline
+            maxLength={500}
           />
         </View>
 
-        <View style={styles.emotionsContainer}>
-          <EmotionButton icon="😊" isSelected={selectedEmotion === "😊"} />
-          <EmotionButton icon="😐" isSelected={selectedEmotion === "😐"} />
-          <EmotionButton icon="😔" isSelected={selectedEmotion === "😔"} />
-          <EmotionButton icon="😡" isSelected={selectedEmotion === "😡"} />
-        </View>
+        <Modal
+          isVisible={isEmotionModalVisible}
+          onBackdropPress={() => setIsEmotionModalVisible(false)}
+          backdropOpacity={0.5}
+          style={styles.modal}
+        >
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: isDarkMode
+                  ? colors.dark.surface
+                  : colors.light.surface,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.modalTitle,
+                {
+                  color: isDarkMode ? colors.dark.text : colors.light.text,
+                },
+              ]}
+            >
+              감정 선택
+            </Text>
+            <View style={styles.emotionsList}>
+              {EMOTIONS.map((emotion) => (
+                <EmotionItem
+                  key={emotion.primary}
+                  emotion={emotion}
+                  onSelect={handleEmotionSelect}
+                />
+              ))}
+            </View>
+          </View>
+        </Modal>
 
         <TouchableOpacity style={styles.saveButton} onPress={saveEntry}>
           <Text style={styles.saveButtonText}>저장하기</Text>
@@ -262,7 +324,6 @@ export default function HomeScreen({ navigation }) {
                 },
               ]}
               onPress={() => showEditDeleteOptions(entry)}
-              onLongPress={() => showEditDeleteOptions(entry)}
             >
               <View style={styles.entryContent}>
                 <View style={styles.entryHeader}>
@@ -308,11 +369,8 @@ export default function HomeScreen({ navigation }) {
             setIsEditModalVisible(false);
             setSelectedEntry(null);
           }}
-          onSave={(updatedFeeling, updatedEmotion) => {
-            if (selectedEntry) {
-              editEntry(selectedEntry.id, updatedFeeling, updatedEmotion);
-            }
-          }}
+          onSave={handleUpdate}
+          onDelete={handleDelete}
         />
       </View>
     </TouchableWithoutFeedback>
@@ -334,39 +392,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.light.text,
   },
-  inputContainer: {
-    backgroundColor: colors.light.surface,
-    borderRadius: 8,
-    padding: 15,
+  inputSection: {
     marginHorizontal: 20,
     marginBottom: 20,
+  },
+  emotionSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 15,
+    borderRadius: 12,
+    backgroundColor: colors.light.surface,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+  },
+  selectedEmotionSelector: {
+    borderColor: colors.primary,
+  },
+  emotionSelectorText: {
+    fontSize: 16,
+    color: colors.light.text,
   },
   input: {
     fontSize: 16,
     fontWeight: "normal",
     minHeight: 100,
-  },
-  emotionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 20,
-    marginBottom: 30,
-  },
-  emotionButton: {
-    alignItems: "center",
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "transparent",
-    minWidth: 60,
-  },
-  emotionIcon: {
-    fontSize: 32,
-    marginBottom: 5,
-  },
-  emotionCount: {
-    fontSize: 14,
-    color: colors.light.text,
   },
   sectionTitle: {
     fontSize: 20,
@@ -417,28 +468,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  selectedEmotionButton: {
+  modal: {
+    margin: 0,
+    justifyContent: "flex-end",
+  },
+  modalContent: {
     backgroundColor: colors.light.surface,
-    borderColor: colors.primary,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "80%",
   },
-  selectedEmotionIcon: {
-    transform: [{ scale: 1.1 }],
-  },
-  selectedIndicator: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  selectedText: {
-    color: colors.light.background,
-    fontSize: 12,
+  modalTitle: {
+    fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  emotionsList: {
+    paddingBottom: 20,
+  },
+  emotionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
+  },
+  selectedEmotionItem: {
+    backgroundColor: colors.primary + "10",
+  },
+  emotionEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  emotionText: {
+    fontSize: 16,
   },
 });

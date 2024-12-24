@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -6,34 +6,15 @@ import {
   Switch,
   TouchableOpacity,
   Alert,
+  StatusBar,
+  Platform,
 } from "react-native";
 import { colors } from "../../infrastructure/theme/colors";
 import { useTheme } from "../../infrastructure/theme/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
 
 export default function SettingsScreen() {
   const { isDarkMode, toggleTheme } = useTheme();
-  const [backupData, setBackupData] = useState([]);
-
-  const exportData = async () => {
-    try {
-      const diaryEntries = await AsyncStorage.getItem("diaryEntries");
-      if (diaryEntries) {
-        const fileName = `moodlog_backup_${
-          new Date().toISOString().split("T")[0]
-        }.json`;
-        const filePath = `${FileSystem.documentDirectory}${fileName}`;
-
-        await FileSystem.writeAsStringAsync(filePath, diaryEntries);
-        await Sharing.shareAsync(filePath);
-      }
-    } catch (error) {
-      console.error("데이터 내보내기 실패:", error);
-      Alert.alert("오류", "데이터 내보내기에 실패했습니다.");
-    }
-  };
 
   const clearAllData = async () => {
     Alert.alert(
@@ -58,6 +39,47 @@ export default function SettingsScreen() {
     );
   };
 
+  const SettingItem = ({ title, description, onPress, rightElement }) => (
+    <TouchableOpacity
+      style={[
+        styles.settingItem,
+        {
+          backgroundColor: isDarkMode
+            ? colors.dark.surface
+            : colors.light.surface,
+        },
+      ]}
+      onPress={onPress}
+      android_ripple={{ color: isDarkMode ? "#ffffff20" : "#00000020" }}
+    >
+      <View style={styles.settingItemContent}>
+        <Text
+          style={[
+            styles.settingText,
+            { color: isDarkMode ? colors.dark.text : colors.light.text },
+          ]}
+        >
+          {title}
+        </Text>
+        {description && (
+          <Text
+            style={[
+              styles.settingDescription,
+              {
+                color: isDarkMode
+                  ? colors.dark.placeholder
+                  : colors.light.placeholder,
+              },
+            ]}
+          >
+            {description}
+          </Text>
+        )}
+      </View>
+      {rightElement}
+    </TouchableOpacity>
+  );
+
   return (
     <View
       style={[
@@ -69,6 +91,13 @@ export default function SettingsScreen() {
         },
       ]}
     >
+      <StatusBar
+        backgroundColor={
+          isDarkMode ? colors.dark.background : colors.light.background
+        }
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+      />
+
       <View style={styles.header}>
         <Text
           style={[
@@ -80,95 +109,41 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.settingItem,
-          {
-            backgroundColor: isDarkMode
-              ? colors.dark.surface
-              : colors.light.surface,
-          },
-        ]}
-        onPress={toggleTheme}
-      >
-        <Text
-          style={[
-            styles.settingText,
-            { color: isDarkMode ? colors.dark.text : colors.light.text },
-          ]}
-        >
-          다크 모드
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+          앱 설정
         </Text>
-        <Switch
-          value={isDarkMode}
-          onValueChange={toggleTheme}
-          trackColor={{ false: colors.light.placeholder, true: colors.primary }}
-          thumbColor={isDarkMode ? colors.dark.text : colors.light.background}
+        <SettingItem
+          title="다크 모드"
+          description="어두운 테마로 변경"
+          rightElement={
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: "#767577", true: colors.primary }}
+              thumbColor={Platform.Version >= 23 ? "#ffffff" : "#f4f3f4"}
+            />
+          }
         />
-      </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity
-        style={[
-          styles.settingItem,
-          {
-            backgroundColor: isDarkMode
-              ? colors.dark.surface
-              : colors.light.surface,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.settingText,
-            { color: isDarkMode ? colors.dark.text : colors.light.text },
-          ]}
-        >
-          감정 기록 알림
-        </Text>
-        <Switch />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.settingGroup,
-          {
-            backgroundColor: isDarkMode
-              ? colors.dark.surface
-              : colors.light.surface,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.settingGroupTitle,
-            { color: isDarkMode ? colors.dark.text : colors.light.text },
-          ]}
-        >
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
           데이터 관리
         </Text>
-        <Text style={styles.settingDescription}>데이터 백업 및 복원</Text>
-      </TouchableOpacity>
+        <SettingItem
+          title="데이터 초기화"
+          description="모든 감정 기록 삭제"
+          onPress={clearAllData}
+        />
+      </View>
 
-      <TouchableOpacity
-        style={[
-          styles.settingGroup,
-          {
-            backgroundColor: isDarkMode
-              ? colors.dark.surface
-              : colors.light.surface,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.settingGroupTitle,
-            { color: isDarkMode ? colors.dark.text : colors.light.text },
-          ]}
-        >
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
           앱 정보
         </Text>
-        <Text style={styles.settingDescription}>버전 1.0.0</Text>
-      </TouchableOpacity>
+        <SettingItem title="버전" description="1.0.0" />
+      </View>
     </View>
   );
 }
@@ -179,49 +154,40 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 20 : 20,
     paddingBottom: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
   },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginHorizontal: 20,
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
   settingItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    padding: 16,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  settingItemContent: {
+    flex: 1,
   },
   settingText: {
     fontSize: 16,
     fontWeight: "500",
   },
-  settingGroup: {
-    padding: 20,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-  },
-  settingGroupTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
   settingDescription: {
     fontSize: 14,
-    color: colors.light.text,
+    marginTop: 2,
   },
 });
