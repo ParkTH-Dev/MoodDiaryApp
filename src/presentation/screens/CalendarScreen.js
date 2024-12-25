@@ -111,17 +111,70 @@ export default function CalendarScreen({ navigation }) {
     setIsEditModalVisible(true);
   };
 
+  const renderEmotionEntry = (entry) => {
+    return (
+      <TouchableOpacity
+        style={styles.entryContainer}
+        onPress={() => showEditDeleteOptions(entry)}
+      >
+        <View style={styles.entryContent}>
+          <View style={styles.emotionHeader}>
+            <Text
+              style={[
+                styles.emotionTime,
+                {
+                  color: isDarkMode
+                    ? colors.dark.placeholder
+                    : colors.light.placeholder,
+                },
+              ]}
+            >
+              {new Date(entry.date).toLocaleTimeString("ko-KR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+            <Text style={styles.emotionEmoji}>
+              {typeof entry.emotion === "string"
+                ? entry.emotion
+                : entry.emotion.emoji}
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.emotionText,
+              {
+                color: isDarkMode ? colors.dark.text : colors.light.text,
+              },
+            ]}
+          >
+            {entry.feeling}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderDayEntries = (entries) => {
+    if (!entries || entries.length === 0) {
+      return (
+        <View style={styles.noEntriesContainer}>
+          <Text style={styles.noEntriesText}>기록이 없습니다</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView style={styles.entriesContainer}>
+        {entries.map((entry, index) => (
+          <View key={index}>{renderEmotionEntry(entry)}</View>
+        ))}
+      </ScrollView>
+    );
+  };
+
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        {
-          backgroundColor: isDarkMode
-            ? colors.dark.background
-            : colors.light.background,
-        },
-      ]}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text
           style={[
@@ -177,7 +230,7 @@ export default function CalendarScreen({ navigation }) {
             ? colors.dark.placeholder
             : colors.light.placeholder,
 
-          // 마커 (점)
+          // 마��� (점)
           dotColor: colors.primary,
           selectedDotColor: "#FFFFFF",
 
@@ -198,79 +251,7 @@ export default function CalendarScreen({ navigation }) {
         monthFormat={"yyyy년 MM월"}
       />
 
-      <View style={styles.emotionsList}>
-        {selectedDate ? (
-          selectedDateEntries.length > 0 ? (
-            selectedDateEntries.map((entry) => (
-              <TouchableOpacity
-                key={entry.id}
-                style={[
-                  styles.emotionItem,
-                  {
-                    backgroundColor: isDarkMode
-                      ? colors.dark.surface
-                      : colors.light.surface,
-                    shadowColor: "#000",
-                    shadowOpacity: isDarkMode ? 0.3 : 0.1,
-                  },
-                ]}
-                onPress={() => showEditDeleteOptions(entry)}
-              >
-                <View style={styles.emotionItemContent}>
-                  <View style={styles.emotionHeader}>
-                    <Text
-                      style={[
-                        styles.emotionTime,
-                        {
-                          color: isDarkMode
-                            ? colors.dark.placeholder
-                            : colors.light.placeholder,
-                        },
-                      ]}
-                    >
-                      {new Date(entry.date).toLocaleTimeString("ko-KR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                    <Text style={styles.emotionEmoji}>{entry.emotion}</Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.emotionText,
-                      {
-                        color: isDarkMode
-                          ? colors.dark.text
-                          : colors.light.text,
-                      },
-                    ]}
-                  >
-                    {entry.feeling}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text
-              style={[
-                styles.noEntriesText,
-                { color: isDarkMode ? colors.dark.text : colors.light.text },
-              ]}
-            >
-              이 날의 기록이 없습니다.
-            </Text>
-          )
-        ) : (
-          <Text
-            style={[
-              styles.noEntriesText,
-              { color: isDarkMode ? colors.dark.text : colors.light.text },
-            ]}
-          >
-            날짜를 선택해주세요.
-          </Text>
-        )}
-      </View>
+      {selectedDate && renderDayEntries(selectedDateEntries)}
 
       <EditEntryModal
         visible={isEditModalVisible}
@@ -285,13 +266,14 @@ export default function CalendarScreen({ navigation }) {
           }
         }}
       />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   header: {
     paddingHorizontal: 20,
@@ -343,5 +325,46 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
+  },
+  entriesContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  entryContainer: {
+    backgroundColor: "#f8f8f8",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  entryContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  entryEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  entryTextContainer: {
+    flex: 1,
+  },
+  entryEmotion: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  entryNote: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  entryTime: {
+    fontSize: 12,
+    color: "#999",
+  },
+  noEntriesContainer: {
+    padding: 16,
+    alignItems: "center",
   },
 });

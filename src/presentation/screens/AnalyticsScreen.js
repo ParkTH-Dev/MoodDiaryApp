@@ -16,7 +16,7 @@ import { useTheme } from "../../infrastructure/theme/ThemeContext";
 import { analyzeEmotionsWithAI } from "../../services/openaiService";
 import { getYoutubeMusic } from "../../services/youtubeService";
 
-export default function RecommendScreen() {
+export default function AnalyticsScreen({ navigation }) {
   const { isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [emotionSummary, setEmotionSummary] = useState(null);
@@ -154,7 +154,7 @@ export default function RecommendScreen() {
           >
             오늘의 명언
           </Text>
-          <ScrollView horizontal>
+          <View style={styles.quotesContainer}>
             {quotes.map((quote, index) => (
               <View key={index} style={styles.quoteCard}>
                 <Text
@@ -170,7 +170,7 @@ export default function RecommendScreen() {
                 <Text style={styles.quoteAuthor}>- {quote.author}</Text>
               </View>
             ))}
-          </ScrollView>
+          </View>
         </View>
       )}
 
@@ -315,29 +315,27 @@ const styles = StyleSheet.create({
   quotesSection: {
     marginBottom: 24,
     width: "100%",
+    padding: 16,
   },
-  quotesScrollView: {
-    marginLeft: -20,
-    paddingLeft: 20,
+  quotesContainer: {
+    width: "100%",
   },
   quoteCard: {
-    width: 320,
-    minHeight: 150,
+    width: "100%",
     padding: 20,
-    marginRight: 16,
+    marginBottom: 16,
     backgroundColor: colors.primary + "10",
     borderRadius: 12,
     justifyContent: "space-between",
   },
   quoteText: {
-    fontSize: 17,
+    fontSize: 16,
     fontStyle: "italic",
     marginBottom: 16,
-    lineHeight: 26,
-    color: colors.dark.text,
+    lineHeight: 24,
   },
   quoteAuthor: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.primary,
     textAlign: "right",
     fontWeight: "500",

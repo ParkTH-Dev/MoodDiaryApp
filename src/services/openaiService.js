@@ -78,7 +78,7 @@ export const analyzeEmotionsWithAI = async (entries) => {
             ],
             "quotes": [
               {
-                "text": "감정에 맞는 명언",
+                "text": "감정에 맞는 명언(한글로 작성)",
                 "author": "작성자",
                 "context": "이 명언이 도움이 되는 이유"
               }

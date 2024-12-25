@@ -137,26 +137,30 @@ export default function HomeScreen({ navigation }) {
     setIsEditModalVisible(true);
   };
 
-  const EmotionItem = ({ emotion, onSelect }) => (
+  const EmotionButton = ({ emotion, isSelected, onPress }) => (
     <TouchableOpacity
-      style={[
-        styles.emotionItem,
-        selectedEmotion?.primary === emotion.primary &&
-          styles.selectedEmotionItem,
-      ]}
-      onPress={() => onSelect(emotion)}
+      style={[styles.emotionButton, isSelected && styles.selectedEmotionButton]}
+      onPress={() => onPress(emotion)}
     >
       <Text style={styles.emotionEmoji}>{emotion.emoji}</Text>
       <Text
-        style={[
-          styles.emotionText,
-          { color: isDarkMode ? colors.dark.text : colors.light.text },
-        ]}
+        style={[styles.emotionLabel, isSelected && styles.selectedEmotionLabel]}
       >
         {emotion.primary}
       </Text>
     </TouchableOpacity>
   );
+
+  const renderSelectedEmotion = () => {
+    if (!selectedEmotion) return null;
+    return (
+      <View style={styles.selectedEmotionContainer}>
+        <Text style={styles.selectedEmotionText}>
+          {selectedEmotion.emoji} {selectedEmotion.primary}
+        </Text>
+      </View>
+    );
+  };
 
   const handleEmotionSelect = (emotion) => {
     setSelectedEmotion(emotion);
@@ -250,7 +254,7 @@ export default function HomeScreen({ navigation }) {
                 color: isDarkMode ? colors.dark.text : colors.light.text,
               },
             ]}
-            placeholder="오늘의 감정을 기록해보세요... (최대 500자)"
+            placeholder="오늘의 감정을 기록해보세요.. (최대 500자)"
             placeholderTextColor={
               isDarkMode ? colors.dark.placeholder : colors.light.placeholder
             }
@@ -289,10 +293,11 @@ export default function HomeScreen({ navigation }) {
             </Text>
             <View style={styles.emotionsList}>
               {EMOTIONS.map((emotion) => (
-                <EmotionItem
+                <EmotionButton
                   key={emotion.primary}
                   emotion={emotion}
-                  onSelect={handleEmotionSelect}
+                  isSelected={selectedEmotion?.primary === emotion.primary}
+                  onPress={handleEmotionSelect}
                 />
               ))}
             </View>
@@ -345,7 +350,9 @@ export default function HomeScreen({ navigation }) {
                       minute: "2-digit",
                     })}
                   </Text>
-                  <Text style={styles.entryEmotion}>{entry.emotion}</Text>
+                  <Text style={styles.entryEmotion}>
+                    {entry.emotion.emoji} {entry.emotion.primary}
+                  </Text>
                 </View>
                 <Text
                   style={[
@@ -488,21 +495,37 @@ const styles = StyleSheet.create({
   emotionsList: {
     paddingBottom: 20,
   },
-  emotionItem: {
+  emotionButton: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: colors.light.border,
   },
-  selectedEmotionItem: {
+  selectedEmotionButton: {
     backgroundColor: colors.primary + "10",
   },
   emotionEmoji: {
     fontSize: 24,
-    marginRight: 12,
+    marginRight: 8,
   },
-  emotionText: {
+  emotionLabel: {
     fontSize: 16,
+    color: colors.text,
+  },
+  selectedEmotionLabel: {
+    color: colors.primary,
+    fontWeight: "bold",
+  },
+  selectedEmotionContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: colors.primary + "10",
+    borderRadius: 8,
+  },
+  selectedEmotionText: {
+    fontSize: 16,
+    color: colors.primary,
+    textAlign: "center",
   },
 });
