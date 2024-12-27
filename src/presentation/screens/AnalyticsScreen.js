@@ -126,16 +126,47 @@ export default function AnalyticsScreen({ navigation }) {
           >
             {emotionSummary.summary}
           </Text>
-          <View style={styles.emotionDetails}>
-            <Text style={styles.emotionPrimary}>
-              주요 감정: {emotionSummary.mainEmotion.primary}
-            </Text>
-            <Text style={styles.emotionIntensity}>
-              감정 강도: {emotionSummary.mainEmotion.intensity}/10
+          <View
+            style={[
+              styles.emotionDetails,
+              {
+                backgroundColor: isDarkMode
+                  ? colors.dark.surface
+                  : colors.light.surface,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.emotionPrimary,
+                { color: isDarkMode ? colors.dark.text : colors.light.text },
+              ]}
+            >
+              {emotionSummary.mainEmotion.primary === "기쁨" &&
+                "긍정적이고 밝은 감정 상태"}
+              {emotionSummary.mainEmotion.primary === "슬픔" &&
+                "우울하고 무거운 감정 상태"}
+              {emotionSummary.mainEmotion.primary === "분노" &&
+                "화가 나고 짜증이 나는 상태"}
+              {emotionSummary.mainEmotion.primary === "불안" &&
+                "걱정되고 불안정한 상태"}
+              {emotionSummary.mainEmotion.primary === "평온" &&
+                "차분하고 안정된 상태"}
+              {emotionSummary.mainEmotion.primary === "설렘" &&
+                "기대감과 두근거림이 있는 상태"}
+              {emotionSummary.mainEmotion.primary === "지침" &&
+                "피로감과 에너지 저하 상태"}
+              {emotionSummary.mainEmotion.primary === "허탈" &&
+                "의욕 저하와 공허한 상태"}
             </Text>
             {emotionSummary.mainEmotion.subEmotions && (
-              <Text style={styles.subEmotions}>
-                세부 감정: {emotionSummary.mainEmotion.subEmotions.join(", ")}
+              <Text
+                style={[
+                  styles.subEmotions,
+                  { color: isDarkMode ? colors.dark.text : colors.light.text },
+                ]}
+              >
+                동반 감정: {emotionSummary.mainEmotion.subEmotions.join(", ")}
               </Text>
             )}
           </View>
@@ -143,7 +174,7 @@ export default function AnalyticsScreen({ navigation }) {
       )}
 
       {quotes.length > 0 && (
-        <View style={styles.quotesSection}>
+        <View style={styles.recommendationsSection}>
           <Text
             style={[
               styles.sectionTitle,
@@ -156,7 +187,17 @@ export default function AnalyticsScreen({ navigation }) {
           </Text>
           <View style={styles.quotesContainer}>
             {quotes.map((quote, index) => (
-              <View key={index} style={styles.quoteCard}>
+              <View
+                key={index}
+                style={[
+                  styles.quoteCard,
+                  {
+                    backgroundColor: isDarkMode
+                      ? colors.dark.surface
+                      : colors.light.surface,
+                  },
+                ]}
+              >
                 <Text
                   style={[
                     styles.quoteText,
@@ -187,15 +228,17 @@ export default function AnalyticsScreen({ navigation }) {
             추천 활동
           </Text>
           {recommendations.map((item, index) => (
-            <View key={index} style={styles.recommendCard}>
-              <Text
-                style={[
-                  styles.recommendType,
-                  { color: isDarkMode ? colors.dark.text : colors.light.text },
-                ]}
-              >
-                {item.type}
-              </Text>
+            <View
+              key={index}
+              style={[
+                styles.recommendCard,
+                {
+                  backgroundColor: isDarkMode
+                    ? colors.dark.surface
+                    : colors.light.surface,
+                },
+              ]}
+            >
               <Text
                 style={[
                   styles.recommendTitle,
@@ -211,6 +254,18 @@ export default function AnalyticsScreen({ navigation }) {
                 ]}
               >
                 {item.description}
+              </Text>
+              <Text
+                style={[
+                  styles.recommendReason,
+                  {
+                    color: isDarkMode ? colors.dark.text : colors.light.text,
+                    marginTop: 8,
+                    fontStyle: "italic",
+                  },
+                ]}
+              >
+                *{item.reason}
               </Text>
             </View>
           ))}
@@ -229,11 +284,18 @@ export default function AnalyticsScreen({ navigation }) {
           >
             추천 음악
           </Text>
-          <ScrollView horizontal>
+          <ScrollView horizontal style={{ marginBottom: 24 }}>
             {musicRecommendations.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.musicCard}
+                style={[
+                  styles.musicCard,
+                  {
+                    backgroundColor: isDarkMode
+                      ? colors.dark.surface
+                      : colors.light.surface,
+                  },
+                ]}
                 onPress={() => openYoutubeVideo(item.videoId)}
               >
                 <Image
@@ -267,7 +329,9 @@ export default function AnalyticsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingTop: 24,
+    paddingHorizontal: 16,
+    marginTop: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -280,6 +344,7 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: "center",
+    marginTop: 8,
     marginBottom: 24,
     width: "100%",
   },
@@ -296,7 +361,6 @@ const styles = StyleSheet.create({
   emotionDetails: {
     width: "100%",
     padding: 16,
-    backgroundColor: colors.primary + "10",
     borderRadius: 12,
   },
   emotionPrimary: {
@@ -324,7 +388,6 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 20,
     marginBottom: 16,
-    backgroundColor: colors.primary + "10",
     borderRadius: 12,
     justifyContent: "space-between",
   },
@@ -352,7 +415,6 @@ const styles = StyleSheet.create({
   },
   recommendCard: {
     width: "100%",
-    backgroundColor: colors.primary + "10",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -383,7 +445,6 @@ const styles = StyleSheet.create({
   musicCard: {
     width: 240,
     marginRight: 12,
-    backgroundColor: colors.primary + "10",
     borderRadius: 12,
     overflow: "hidden",
   },

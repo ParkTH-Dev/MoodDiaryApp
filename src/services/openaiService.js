@@ -13,35 +13,10 @@ api.interceptors.request.use((request) => {
   return request;
 });
 
-export const testOpenAI = async () => {
-  try {
-    console.log("API 요청 시작");
-    const response = await api.post("/chat/completions", {
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "user",
-          content: "Hello",
-        },
-      ],
-      max_tokens: 10,
-      temperature: 0.5,
-    });
-
-    console.log("API 응답 전체:", response.data);
-    return response.data.choices[0].message.content;
-  } catch (error) {
-    console.error("전체 에러 객체:", error);
-    console.error("API 에러 상태:", error.response?.status);
-    console.error("API 에러 데이터:", error.response?.data);
-    throw new Error(error.response?.data?.error?.message || "API 호출 실패");
-  }
-};
-
 export const analyzeEmotionsWithAI = async (entries) => {
   try {
     const response = await api.post("/chat/completions", {
-      model: "gpt-3.5-turbo",
+      model: "gpt-4-turbo",
       messages: [
         {
           role: "system",
@@ -71,16 +46,15 @@ export const analyzeEmotionsWithAI = async (entries) => {
             "recommendations": [
               {
                 "type": "활동",
-                "title": "추천 활동 제목",
-                "description": "상세 설명",
-                "reason": "이 활동을 추천하는 이유"
+                "title": "새로운 활동 추천 (전략게임 체스배우기, 주변 등산로 등반하기, 노트북들고 주변 카페에서 글쓰기 등)",
+                "description": "새로운 활동에 대한 상세 설명",
+                "reason": "이 새로운 활동을 추천하는 이유"
               }
             ],
             "quotes": [
               {
                 "text": "감정에 맞는 명언(한글로 작성)",
                 "author": "작성자",
-                "context": "이 명언이 도움이 되는 이유"
               }
             ]
           }

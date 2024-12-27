@@ -252,6 +252,8 @@ export default function HomeScreen({ navigation }) {
                   ? colors.dark.surface
                   : colors.light.surface,
                 color: isDarkMode ? colors.dark.text : colors.light.text,
+                borderRadius: 12,
+                padding: 15,
               },
             ]}
             placeholder="오늘의 감정을 기록해보세요.. (최대 500자)"
@@ -350,9 +352,7 @@ export default function HomeScreen({ navigation }) {
                       minute: "2-digit",
                     })}
                   </Text>
-                  <Text style={styles.entryEmotion}>
-                    {entry.emotion.emoji} {entry.emotion.primary}
-                  </Text>
+                  <Text style={styles.entryEmotion}>{entry.emotion.emoji}</Text>
                 </View>
                 <Text
                   style={[

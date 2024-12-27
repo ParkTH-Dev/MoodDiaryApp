@@ -26,22 +26,55 @@ export default function CalendarScreen({ navigation }) {
     try {
       const entries = await AsyncStorage.getItem("diaryEntries");
       if (entries) {
-        const parsedEntries = JSON.parse(entries);
-        setDiaryEntries(parsedEntries);
+        // JSON 파싱 전에 데이터 유효성 검사
+        try {
+          const parsedEntries = JSON.parse(entries);
+          if (!Array.isArray(parsedEntries)) {
+            throw new Error("데이터 형식이 올바르지 않습니다");
+          }
 
-        // 마커 데이터 생성
-        const markers = {};
-        parsedEntries.forEach((entry) => {
-          const dateStr = new Date(entry.date).toISOString().split("T")[0];
-          markers[dateStr] = {
-            marked: true,
-            dotColor: colors.primary,
-          };
-        });
-        setMarkedDates(markers);
+          // emotion 객체 구조 확인 및 복구
+          const validatedEntries = parsedEntries.map((entry) => {
+            if (typeof entry.emotion === "string") {
+              // emotion이 문자열인 경우 객체로 변환
+              const emotionObj = EMOTIONS.find(
+                (e) => e.emoji === entry.emotion
+              ) || {
+                emoji: entry.emotion,
+                primary: "알 수 없음",
+                intensity: 5,
+              };
+              return { ...entry, emotion: emotionObj };
+            }
+            return entry;
+          });
+
+          setDiaryEntries(validatedEntries);
+
+          // 마커 데이터 생성
+          const markers = {};
+          validatedEntries.forEach((entry) => {
+            const dateStr = new Date(entry.date).toISOString().split("T")[0];
+            markers[dateStr] = {
+              marked: true,
+              dotColor: colors.primary,
+            };
+          });
+          setMarkedDates(markers);
+        } catch (parseError) {
+          console.error("데이터 파싱 실패:", parseError);
+          // 손상된 데이터 초기화
+          await AsyncStorage.setItem("diaryEntries", JSON.stringify([]));
+          setDiaryEntries([]);
+          Alert.alert(
+            "데이터 오류",
+            "데이터가 손상되어 초기화되었습니다. 죄송합니다."
+          );
+        }
       }
     } catch (error) {
       console.error("일기 데이터 로딩 실패:", error);
+      Alert.alert("오류", "데이터를 불러오는 중 문제가 발생했습니다.");
     }
   };
 
@@ -118,38 +151,38 @@ export default function CalendarScreen({ navigation }) {
         onPress={() => showEditDeleteOptions(entry)}
       >
         <View style={styles.entryContent}>
-          <View style={styles.emotionHeader}>
-            <Text
-              style={[
-                styles.emotionTime,
-                {
-                  color: isDarkMode
-                    ? colors.dark.placeholder
-                    : colors.light.placeholder,
-                },
-              ]}
-            >
-              {new Date(entry.date).toLocaleTimeString("ko-KR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
+          <Text
+            style={[
+              styles.emotionTime,
+              {
+                color: isDarkMode
+                  ? colors.dark.placeholder
+                  : colors.light.placeholder,
+              },
+            ]}
+          >
+            {new Date(entry.date).toLocaleTimeString("ko-KR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+          <View style={styles.emotionContentWrapper}>
             <Text style={styles.emotionEmoji}>
               {typeof entry.emotion === "string"
                 ? entry.emotion
                 : entry.emotion.emoji}
             </Text>
+            <Text
+              style={[
+                styles.emotionText,
+                {
+                  color: isDarkMode ? colors.dark.text : colors.light.text,
+                },
+              ]}
+            >
+              {entry.feeling}
+            </Text>
           </View>
-          <Text
-            style={[
-              styles.emotionText,
-              {
-                color: isDarkMode ? colors.dark.text : colors.light.text,
-              },
-            ]}
-          >
-            {entry.feeling}
-          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -174,7 +207,16 @@ export default function CalendarScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDarkMode
+            ? colors.dark.background
+            : colors.light.background,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Text
           style={[
@@ -230,7 +272,7 @@ export default function CalendarScreen({ navigation }) {
             ? colors.dark.placeholder
             : colors.light.placeholder,
 
-          // 마��� (점)
+          // 마커 (점)
           dotColor: colors.primary,
           selectedDotColor: "#FFFFFF",
 
@@ -313,13 +355,14 @@ const styles = StyleSheet.create({
   },
   emotionTime: {
     fontSize: 14,
+    marginBottom: 8,
   },
   emotionEmoji: {
-    fontSize: 20,
+    fontSize: 24,
   },
   emotionText: {
     fontSize: 16,
-    lineHeight: 24,
+    flex: 1,
   },
   noEntriesText: {
     textAlign: "center",
@@ -331,16 +374,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   entryContainer: {
-    backgroundColor: "#f8f8f8",
+    backgroundColor: colors.primary + "10",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
   },
   entryContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
   },
   entryEmoji: {
     fontSize: 24,
@@ -366,5 +406,10 @@ const styles = StyleSheet.create({
   noEntriesContainer: {
     padding: 16,
     alignItems: "center",
+  },
+  emotionContentWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
 });
