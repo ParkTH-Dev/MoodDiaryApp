@@ -1,28 +1,40 @@
 {
   "expo": {
-    "name": "EmotionalDiary",
+    "name": "감정일기",
     "slug": "EmotionalDiary",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.xotj2635.emotionaldiary"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.xotj2635.emotionaldiary"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0c7adf5e-ffc4-4d77-943e-f68e4619989f"
+      },
+      "OPENAI_API_KEY": "@openai_api_key",
+      "YOUTUBE_API_KEY": "@youtube_api_key"
+    },
+    "owner": "xotj2635",
+    "plugins": ["expo-build-properties"]
   }
 }
